@@ -1,0 +1,92 @@
+_schema-version: "3.2"
+ID: ui55projectake3
+version: 0.0.1
+modules:
+- name: ui55projectake3-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: ui55projectake3-destination-service
+    parameters:
+      content-target: true
+  - name: ui55projectake3_html_repo_host
+    parameters:
+      service-key:
+        name: ui55projectake3_html_repo_host-key
+  - name: uaa_ui55projectake3
+    parameters:
+      service-key:
+        name: uaa_ui55projectake3-key
+  parameters:
+    content:
+      subaccount:
+        destinations:
+        - Name: ui5proj_ui55projectake3_html_repo_host
+          ServiceInstanceName: ui55projectake3-html5-app-host-service
+          ServiceKeyName: ui55projectake3_html_repo_host-key
+          sap.cloud.service: ui5proj
+        - Authentication: OAuth2UserTokenExchange
+          Name: ui5proj_uaa_ui55projectake3
+          ServiceInstanceName: ui55projectake3-xsuaa-service
+          ServiceKeyName: uaa_ui55projectake3-key
+          sap.cloud.service: ui5proj
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: ui55projectake3-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: ui55projectake3_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - ui5fioritake3workflowuimodule.zip
+      name: ui5fioritake3workflowuimodule
+      target-path: resources/
+- name: ui5fioritake3workflowuimodule
+  type: html5
+  path: workflow-ui-module
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: ui55projectake3-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        subaccount:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: ui55projectake3-destination-service
+    service-plan: lite
+- name: ui55projectake3_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: ui55projectake3-html5-app-host-service
+    service-plan: app-host
+- name: uaa_ui55projectake3
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: ui55projectake3-xsuaa-service
+    service-plan: application
+parameters:
+  deploy_mode: html5-repo
